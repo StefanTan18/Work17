@@ -3,40 +3,57 @@
 #include <sys/shm.h>
 #include <sys/ipc.h>
 #include <sys/types.h>
+#include <sys/sem.h>
 #include <fcntl.h>
 #include <unistd.h>
-
-#define SEM_KEY 1234
+#include <string.h>
 
 union semun {
   int val;
   struct semid_ds *buf;
   struct seminfo *_buf;
-}
+};
 
-int ctl() {
+int main() {
   key_t key;
-  int shmid, semd, fd;
+  int shmid, semid, fd;
   char *data;
   char r[200];
   union semun arg;
+  char *args[] = {"cat", "story.txt"};
+
+  key = ftok("ctl.c", 'R');
   
   fgets(r, 200, stdin);
   if (!strcmp(r, "-c\n")) {
-    key = ftok("file", 'R');
     shmid = shmget(key, 200, 0644 | IPC_CREAT);
     data = shmat(shmid, (void *)0, 0);
 
-    semd = semget(SEM_KEY, 1, IPC_CREAT | IPC_EXCL );
+    semid = semget(key, 1, IPC_CREAT | IPC_EXCL );
 
-    fd = open("story.txt", O_CREAT | O_TRUNC | O_EXCL);
+    semctl(semid, 0, SETVAL, 1);
+    
+    fd = open("story.txt", O_CREAT | O_TRUNC, 0644);
+    close(fd);
   }
   
   if (!strcmp(r, "-r\n")) {
+    shmid = shmget(key, 200, 0);
+    semid = semget(key, 1, 0);
+    
     shmdt(data);
     shmctl(shmid, IPC_RMID, NULL);
 
-    semctl(semd, 0, IPC_RMID, arg);
+    semctl(semid, 0, IPC_RMID, arg);
 
-    //excvp(cat)
+    printf("The story so far...\n");
+    execvp(args[0], args);
   }
+
+  if (!strcmp(r, "-v\n")) {
+    printf("The story so far...\n");
+    execvp(args[0], args);
+  }
+
+  return 0;
+}
