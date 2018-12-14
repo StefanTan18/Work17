@@ -14,8 +14,10 @@ union semun{
 };
 
 
-void writer(int semdesc,key_t key,int size){
+void writer(int semdesc,int size){
 
+  
+  key_t key = ftok("ctl.c", "R")
   union semun arg;
   struct sembuf buf;
   char line[250];
