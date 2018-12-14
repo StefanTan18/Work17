@@ -18,6 +18,7 @@ int main() {
   key_t key;
   int shmid, semid, fd;
   char *data;
+  char *story;
   char r[200];
   union semun arg;
   char *args[] = {"cat", "story.txt"};
@@ -47,12 +48,18 @@ int main() {
     semctl(semid, 0, IPC_RMID, arg);
 
     printf("The story so far...\n");
-    execvp(args[0], args);
+    fd = open("story.txt", O_RDONLY);
+    read(fd, story, 250);
+    printf("%s\n", story);
+    close(fd);
   }
 
   if (!strcmp(r, "-v\n")) {
     printf("The story so far...\n");
-    execvp(args[0], args);
+    fd = open("story.txt", O_RDONLY);
+    read(fd, story, 250);
+    printf("%s\n", story);
+    close(fd);
   }
 
   return 0;
